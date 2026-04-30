@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crop Disease Detection</title>
+    <!-- Link to the CSS file -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🌱 Crop Disease Detector</h1>
+        <p>Upload a clear photo of a crop leaf to detect diseases.</p>
+        
+        <!-- Image upload structure -->
+        <div class="upload-section">
+            <input type="file" id="imageInput" accept="image/*" />
+            <label for="imageInput" class="upload-btn">Choose an Image</label>
+        </div>
+
+        <!-- Render preview dynamically here -->
+        <div class="preview-section">
+            <img id="imagePreview" alt="Image Preview" />
+        </div>
+
+        <button id="predictBtn" disabled>Predict Disease</button>
+
+        <!-- Dynamic loader block -->
+        <div id="loading" class="hidden">
+            <div class="spinner"></div>
+            <p>Analyzing image...</p>
+        </div>
+
+        <!-- Dynamic results block -->
+        <div id="result" class="hidden">
+            <h2>Result:</h2>
+            <p><strong>Disease:</strong> <span id="diseaseName"></span></p>
+            <p><strong>Confidence:</strong> <span id="confidenceLevel"></span></p>
+        </div>
+
+        <!-- Used for alerting network failures / logic flaws -->
+        <div id="error" class="hidden"></div>
+    </div>
+
+    <!-- Link to the core application behavior logic -->
+    <script src="script.js"></script>
+</body>
+</html>
