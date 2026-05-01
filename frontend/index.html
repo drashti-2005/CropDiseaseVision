@@ -3,46 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crop Disease Detection</title>
-    <!-- Link to the CSS file -->
+    <title>CropDiseaseVision - Farmer's AI Assistant</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="container">
-        <h1>🌱 Crop Disease Detector</h1>
-        <p>Upload a clear photo of a crop leaf to detect diseases.</p>
-        
-        <!-- Image upload structure -->
-        <div class="upload-section">
-            <input type="file" id="imageInput" accept="image/*" />
-            <label for="imageInput" class="upload-btn">Choose an Image</label>
+    <!-- Navigation Header -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <i class="fas fa-leaf"></i>
+                <span>CropDiseaseVision</span>
+            </div>
+            <p class="tagline">AI-Powered Crop Health Assistant</p>
         </div>
+    </nav>
 
-        <!-- Render preview dynamically here -->
-        <div class="preview-section">
-            <img id="imagePreview" alt="Image Preview" />
-        </div>
+    <div class="main-container">
+        <!-- Sidebar with Info -->
+        <aside class="sidebar">
+            <div class="info-box">
+                <h3><i class="fas fa-lightbulb"></i> Tips</h3>
+                <ul>
+                    <li>Use clear, well-lit photos</li>
+                    <li>Capture the affected leaf</li>
+                    <li>Avoid blurry images</li>
+                    <li>Upload JPG or PNG</li>
+                </ul>
+            </div>
+        </aside>
 
-        <button id="predictBtn" disabled>Predict Disease</button>
+        <!-- Main Content -->
+        <main class="content">
+            <div class="container">
+                <h1><i class="fas fa-microscope"></i> Crop Disease Detector</h1>
+                <p>Upload a photo or describe your crop issue using voice to get instant disease detection</p>
 
-        <!-- Dynamic loader block -->
-        <div id="loading" class="hidden">
-            <div class="spinner"></div>
-            <p>Analyzing image...</p>
-        </div>
+                <!-- Tab Navigation -->
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="image">
+                        <i class="fas fa-image"></i> Image Upload
+                    </button>
+                    <button class="tab-btn" data-tab="voice">
+                        <i class="fas fa-microphone"></i> Voice Input
+                    </button>
+                </div>
 
-        <!-- Dynamic results block -->
-        <div id="result" class="hidden">
-            <h2>Result:</h2>
-            <p><strong>Disease:</strong> <span id="diseaseName"></span></p>
-            <p><strong>Confidence:</strong> <span id="confidenceLevel"></span></p>
-        </div>
+                <!-- Image Upload Tab -->
+                <div id="image-tab" class="tab-content active">
+                    <div class="upload-section">
+                        <input type="file" id="imageInput" accept="image/*" />
+                        <label for="imageInput" class="upload-btn">
+                            <i class="fas fa-cloud-upload-alt"></i> Choose an Image
+                        </label>
+                        <p class="upload-hint">or drag and drop</p>
+                    </div>
 
-        <!-- Used for alerting network failures / logic flaws -->
-        <div id="error" class="hidden"></div>
+                    <div class="preview-section">
+                        <img id="imagePreview" alt="Image Preview" />
+                    </div>
+
+                    <button id="predictBtn" class="predict-btn" disabled>
+                        <i class="fas fa-magnifying-glass"></i> Analyze Image
+                    </button>
+                </div>
+
+                <!-- Voice Input Tab -->
+                <div id="voice-tab" class="tab-content">
+                    <div class="voice-section">
+                        <button id="voiceBtn" class="voice-btn">
+                            <i class="fas fa-microphone"></i> Start Recording
+                        </button>
+                        <p id="voiceStatus" class="voice-status"></p>
+                        <p id="voiceTranscript" class="voice-transcript"></p>
+                        <button id="voicePredictBtn" class="predict-btn" disabled style="margin-top: 20px;">
+                            <i class="fas fa-brain"></i> Analyze Description
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loading" class="hidden">
+                    <div class="spinner"></div>
+                    <p>Analyzing...</p>
+                </div>
+
+                <!-- Results Section -->
+                <div id="result" class="hidden result-card">
+                    <h2><i class="fas fa-check-circle"></i> Analysis Result</h2>
+                    
+                    <div class="result-main">
+                        <div class="disease-box">
+                            <h3><i class="fas fa-exclamation-triangle"></i> Disease Detected</h3>
+                            <p id="diseaseName" class="disease-name"></p>
+                        </div>
+
+                        <div class="confidence-box">
+                            <h3><i class="fas fa-chart-pie"></i> Confidence Level</h3>
+                            <div class="confidence-bar">
+                                <div id="confidenceBar" class="confidence-fill"></div>
+                                <span id="confidenceLevel" class="confidence-text"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="recommendations">
+                        <h3><i class="fas fa-prescription-bottle"></i> Recommended Actions</h3>
+                        <ul id="actionsList"></ul>
+                    </div>
+
+                    <button id="resetBtn" class="reset-btn">
+                        <i class="fas fa-redo"></i> Analyze Another
+                    </button>
+                </div>
+
+                <!-- Error Section -->
+                <div id="error" class="hidden error-card">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <p id="errorMessage"></p>
+                </div>
+
+                <!-- History Section -->
+                <div id="history" class="history-section">
+                    <h3><i class="fas fa-history"></i> Recent Analyses</h3>
+                    <div id="historyList" class="history-list"></div>
+                </div>
+            </div>
+        </main>
     </div>
 
-    <!-- Link to the core application behavior logic -->
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2026 CropDiseaseVision. Empowering Farmers with AI. | Version 2.0</p>
+    </footer>
+
     <script src="script.js"></script>
 </body>
 </html>

@@ -11,8 +11,8 @@ import pandas as pd
 # Configuration
 IMG_SIZE = (224, 224)
 BATCH_SIZE = 32
-EPOCHS = 10
-MODEL_SAVE_PATH = "plant_disease_model.h5"
+EPOCHS = 5
+MODEL_SAVE_PATH = "model/trained_model.h5"
 
 # --- Dataset Configuration ---
 # Choose between "csv" or "directory"
@@ -129,7 +129,7 @@ def train_model():
 
     # Save class indices to a file so inference knows the mapping
     import json
-    with open('class_indices.json', 'w') as f:
+    with open('model/labels.json', 'w') as f:
         json.dump(train_generator.class_indices, f)
 
     print("Building model...")
