@@ -1,0 +1,27 @@
+# Backend Framework & Core
+Flask==3.0.0
+Flask-Cors==4.0.0
+fastapi>=0.95.0
+uvicorn>=0.21.1
+python-multipart>=0.0.6
+
+# Machine Learning & Image Processing
+tensorflow>=2.21.0
+numpy>=2.0.0
+Pillow>=11.0.0
+
+# Translation & Language Services
+requests>=2.28.0
+textblob>=0.17.1
+google-cloud-translate>=3.11.0
+google-cloud-texttospeech>=2.14.0
+
+# Database & Storage (optional, for chat history)
+sqlalchemy>=2.0.0
+
+# API & Configuration
+pydantic>=2.0.0
+python-dotenv>=0.21.0
+
+# Production Server
+gunicorn>=20.1.0

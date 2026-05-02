@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CropDiseaseVision - Farmer's AI Assistant</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="multilingual-style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -16,6 +17,19 @@
                 <span>CropDiseaseVision</span>
             </div>
             <p class="tagline">AI-Powered Crop Health Assistant</p>
+            
+            <!-- Language Selector in Header -->
+            <div class="language-selector-header">
+                <label for="languageSelector"><i class="fas fa-globe"></i> Language:</label>
+                <select id="languageSelector">
+                    <option value="English">English</option>
+                    <option value="Gujarati">ગુજરાતી</option>
+                    <option value="Hindi">हिन्दी</option>
+                    <option value="Marathi">मराठी</option>
+                    <option value="Tamil">தமிழ்</option>
+                    <option value="Telugu">తెలుగు</option>
+                </select>
+            </div>
         </div>
     </nav>
 
@@ -39,22 +53,18 @@
                 <h1><i class="fas fa-microscope"></i> Crop Disease Detector</h1>
                 <p>Upload a photo or describe your crop issue using voice to get instant disease detection</p>
 
-                <!-- Tab Navigation -->
-                <div class="tabs">
-                    <button class="tab-btn active" data-tab="image">
-                        <i class="fas fa-image"></i> Image Upload
-                    </button>
-                    <button class="tab-btn" data-tab="voice">
-                        <i class="fas fa-microphone"></i> Voice Input
-                    </button>
+                <!-- Tabs -->
+                <div class="tabs" style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <button class="tab-btn active" id="tabImage" onclick="switchTab('image')" style="flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #27ae60; color: white; display: flex; align-items: center; justify-content: center; gap: 8px;"><i class="fas fa-camera"></i> Image Detection</button>
+                    <button class="tab-btn" id="tabVoice" onclick="switchTab('voice')" style="flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #ecf0f1; color: #2c3e50; display: flex; align-items: center; justify-content: center; gap: 8px;"><i class="fas fa-microphone"></i> Voice Detection</button>
                 </div>
 
-                <!-- Image Upload Tab -->
-                <div id="image-tab" class="tab-content active">
+                <!-- Image Detection Content -->
+                <div class="input-card tab-content active" id="contentImage">
                     <div class="upload-section">
                         <input type="file" id="imageInput" accept="image/*" />
                         <label for="imageInput" class="upload-btn">
-                            <i class="fas fa-cloud-upload-alt"></i> Choose an Image
+                            <i class="fas fa-cloud-upload-alt"></i> Choose an Image (Required)
                         </label>
                         <p class="upload-hint">or drag and drop</p>
                     </div>
@@ -63,24 +73,37 @@
                         <img id="imagePreview" alt="Image Preview" />
                     </div>
 
-                    <button id="predictBtn" class="predict-btn" disabled>
-                        <i class="fas fa-magnifying-glass"></i> Analyze Image
-                    </button>
-                </div>
-
-                <!-- Voice Input Tab -->
-                <div id="voice-tab" class="tab-content">
-                    <div class="voice-section">
+                    <div class="voice-section" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+                        <h3><i class="fas fa-microphone"></i> Add Optional Description</h3>
+                        <p style="color: #7f8c8d; font-size: 0.9rem; margin-bottom: 15px;">Describe the symptoms or affected parts for better accuracy</p>
                         <button id="voiceBtn" class="voice-btn">
                             <i class="fas fa-microphone"></i> Start Recording
                         </button>
                         <p id="voiceStatus" class="voice-status"></p>
-                        <p id="voiceTranscript" class="voice-transcript"></p>
-                        <button id="voicePredictBtn" class="predict-btn" disabled style="margin-top: 20px;">
-                            <i class="fas fa-brain"></i> Analyze Description
-                        </button>
+                        <div id="voiceTranscript" class="voice-transcript"></div>
                     </div>
+
+                    <button id="predictBtn" class="predict-btn" disabled style="margin-top: 20px;">
+                        <i class="fas fa-magnifying-glass"></i> Analyze Crop
+                    </button>
                 </div>
+
+                <!-- Voice Detection Content -->
+                <div class="input-card tab-content" id="contentVoice" style="display: none;">
+                    <div class="voice-section">
+                        <h3><i class="fas fa-headset"></i> Standalone Voice Detection</h3>
+                        <p style="color: #7f8c8d; font-size: 0.9rem; margin-bottom: 15px;">Speak the symptoms of your crop disease and our AI will analyze it.</p>
+                        <button id="standaloneVoiceBtn" class="voice-btn">
+                            <i class="fas fa-microphone"></i> Start Recording Symptoms
+                        </button>
+                        <p id="standaloneVoiceStatus" class="voice-status"></p>
+                        <div id="standaloneVoiceTranscript" class="voice-transcript"></div>
+                    </div>
+                    <button id="standalonePredictBtn" class="predict-btn" disabled style="margin-top: 20px;">
+                        <i class="fas fa-magnifying-glass"></i> Analyze Symptoms
+                    </button>
+                </div>
+
 
                 <!-- Loading State -->
                 <div id="loading" class="hidden">
@@ -112,9 +135,14 @@
                         <ul id="actionsList"></ul>
                     </div>
 
-                    <button id="resetBtn" class="reset-btn">
-                        <i class="fas fa-redo"></i> Analyze Another
-                    </button>
+                    <div class="button-group">
+                        <button id="playResultBtn" class="audio-btn">
+                            <i class="fas fa-volume-up"></i> Listen to Result
+                        </button>
+                        <button id="resetBtn" class="reset-btn">
+                            <i class="fas fa-redo"></i> Analyze Another
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Error Section -->

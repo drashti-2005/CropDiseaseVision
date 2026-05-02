@@ -1,6 +1,7 @@
 import os
 import json
 import numpy as np
+import requests
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from tensorflow.keras.models import load_model
@@ -8,6 +9,8 @@ from tensorflow.keras.preprocessing.image import img_to_array
 from PIL import Image
 import warnings
 warnings.filterwarnings('ignore')
+
+from services.voice_detection import predict_disease_from_text
 
 app = Flask(__name__)
 # Enable CORS so the frontend can make requests to this API structure
@@ -65,26 +68,6 @@ def preprocess_image(image, target_size=(224, 224)):
     
     return image_array
 
-def match_disease_from_description(description):
-    """Try to match disease from voice description."""
-    description_lower = description.lower()
-    matches = []
-    
-    for disease_name in class_labels.keys():
-        disease_lower = disease_name.lower().replace('___', ' ').replace('_', ' ')
-        keywords = disease_lower.split()
-        
-        # Count matching keywords
-        matching_keywords = sum(1 for keyword in keywords if keyword in description_lower)
-        if matching_keywords > 0:
-            matches.append((disease_name, matching_keywords))
-    
-    if matches:
-        # Sort by number of matches and return top match
-        matches.sort(key=lambda x: x[1], reverse=True)
-        return matches[0][0], 0.85  # Return matched disease and higher confidence
-    
-    return "Unknown", 0.0
 
 @app.route('/', methods=['GET'])
 def index():
@@ -101,7 +84,7 @@ def index():
         ]
     }), 200
 
-@app.route('/health', methods=['GET'])
+@app.route('/api/health', methods=['GET'])
 def health():
     """Health check endpoint."""
     return jsonify({
@@ -110,7 +93,7 @@ def health():
         "classes": len(class_labels)
     }), 200
 
-@app.route('/classes', methods=['GET'])
+@app.route('/api/classes', methods=['GET'])
 def get_classes():
     """Get all disease classes."""
     return jsonify({
@@ -118,7 +101,7 @@ def get_classes():
         "classes": list(class_labels.keys())
     }), 200
 
-@app.route('/predict', methods=['POST'])
+@app.route('/api/predict', methods=['POST'])
 def predict():
     """API endpoint to predict crop disease from an image."""
     # Handle if model wasn't loaded
@@ -161,6 +144,20 @@ def predict():
             predictions = np.zeros((1, len(index_to_class)))
             predictions[0][predicted_class_index] = confidence_val
         # ------------------------------------------
+        
+        description = request.form.get('description', '').strip()
+        if description:
+            voice_disease, voice_conf = predict_disease_from_text(description)
+            if voice_disease != "Unknown" and voice_disease in class_labels:
+                idx = class_labels[voice_disease]
+                print(f"Voice match found for: {voice_disease}. Boosting confidence!")
+                
+                # Boost the actual prediction
+                predictions[0][idx] = min(1.0, predictions[0][idx] + 0.4)
+                
+                # Re-calculate highest prediction after boost
+                predicted_class_index = int(np.argmax(predictions, axis=1)[0])
+
 
         # Get all predictions sorted by confidence (only show > 10%)
         all_predictions = []
@@ -191,7 +188,7 @@ def predict():
         print(f"Error in predict: {str(e)}")
         return jsonify({"error": str(e), "success": False}), 500
 
-@app.route('/predict-voice', methods=['POST'])
+@app.route('/api/predict-voice', methods=['POST'])
 def predict_voice():
     """API endpoint to predict crop disease from voice description."""
     if model is None:
@@ -205,7 +202,7 @@ def predict_voice():
             return jsonify({"error": "No description provided"}), 400
         
         # Try to match disease from description
-        disease_name, confidence = match_disease_from_description(description)
+        disease_name, confidence = predict_disease_from_text(description)
         
         return jsonify({
             "disease": disease_name,
@@ -217,6 +214,136 @@ def predict_voice():
         
     except Exception as e:
         print(f"Error in predict-voice: {str(e)}")
+        return jsonify({"error": str(e), "success": False}), 500
+
+@app.route('/api/predict-voice-disease', methods=['POST'])
+def predict_voice_disease():
+    """API endpoint to predict crop disease standalone from voice description using NLP."""
+    try:
+        data = request.get_json()
+        description = data.get('text', '').strip()
+        
+        if not description:
+            return jsonify({"error": "No text provided"}), 400
+            
+        disease_name, confidence = predict_disease_from_text(description)
+        
+        # We handle recommendations in the frontend, so we just return disease and confidence
+        return jsonify({
+            "disease": disease_name,
+            "confidence": confidence,
+            "description": description,
+            "method": "nlp_matching",
+            "success": True
+        }), 200
+        
+    except Exception as e:
+        print(f"Error in predict-voice-disease: {str(e)}")
+        return jsonify({"error": str(e), "success": False}), 500
+
+# Language Code Mapping for LibreTranslate
+LANGUAGE_CODE_MAP = {
+    "english": "en",
+    "hindi": "hi",
+    "gujarati": "gu",
+    "marathi": "mr",
+    "tamil": "ta",
+    "telugu": "te"
+}
+
+@app.route('/api/translate', methods=['POST'])
+def translate_text():
+    """
+    Translate text to target language using LibreTranslate API.
+    
+    Request Body:
+    {
+        "text": "Disease name or text to translate",
+        "target_language": "gu" or language name
+    }
+    
+    Response:
+    {
+        "translated_text": "translated text",
+        "source_language": "en",
+        "target_language": "gu",
+        "success": true
+    }
+    """
+    try:
+        data = request.get_json()
+        text = data.get('text', '').strip()
+        target_lang = data.get('target_language', 'en').lower()
+        source_lang = data.get('source_language', 'auto').lower()
+        
+        print(f"\n🌐 TRANSLATION REQUEST:")
+        print(f"   Text: {text}")
+        print(f"   Source Language: {source_lang}")
+        print(f"   Target Language: {target_lang}")
+        
+        if not text:
+            return jsonify({"error": "No text to translate"}), 400
+        
+        # Convert full language names to language codes
+        if target_lang in LANGUAGE_CODE_MAP:
+            target_lang = LANGUAGE_CODE_MAP[target_lang]
+        if source_lang in LANGUAGE_CODE_MAP:
+            source_lang = LANGUAGE_CODE_MAP[source_lang]
+        
+        # If both are english, return as-is
+        if target_lang == 'en' and source_lang == 'en':
+            print(f"   ➜ English requested, returning as-is")
+            return jsonify({
+                "translated_text": text,
+                "source_language": "en",
+                "target_language": "en",
+                "success": True
+            }), 200
+        
+        try:
+            import urllib.parse
+            encoded_text = urllib.parse.quote(text)
+            # Use Google Translate API (free, reliable)
+            translation_url = f"https://translate.googleapis.com/translate_a/single?client=gtx&sl={source_lang}&tl={target_lang}&dt=t&q={encoded_text}"
+            
+            print(f"   🔄 Calling Translation API with source: {source_lang}, target: {target_lang}")
+            response = requests.get(translation_url, timeout=10)
+            
+            if response.status_code == 200:
+                result = response.json()
+                # Extract translated text parts and join them
+                translated = "".join([sentence[0] for sentence in result[0]])
+                print(f"   ✅ Translated: {translated}")
+                return jsonify({
+                    "translated_text": translated,
+                    "source_language": "en",
+                    "target_language": target_lang,
+                    "success": True
+                }), 200
+            else:
+                print(f"   ⚠️ API error: {response.status_code}")
+                # Fallback: return original text
+                return jsonify({
+                    "translated_text": text,
+                    "source_language": "en",
+                    "target_language": target_lang,
+                    "success": False,
+                    "warning": "Translation service unavailable, returning original text"
+                }), 200
+                
+        except requests.exceptions.RequestException as e:
+            print(f"   ❌ Connection error: {e}")
+            # Fallback: return original text instead of failing
+            return jsonify({
+                "translated_text": text,
+                "source_language": "en",
+                "target_language": target_lang,
+                "success": False,
+                "warning": "Translation service unavailable, returning original text"
+            }), 200
+        
+    except Exception as e:
+        print(f"❌ Error in translate: {str(e)}")
         return jsonify({"error": str(e), "success": False}), 500
 
 if __name__ == '__main__':

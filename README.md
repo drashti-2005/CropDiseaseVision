@@ -1,105 +1,197 @@
-# 🌾 Crop Disease Detection System using AI (Computer Vision)
+# CropDiseaseVision - AI-Powered Crop Health Assistant
 
-An end-to-end full-stack AI system for detecting plant diseases using Deep Learning (CNN / MobileNetV2), a FastAPI backend, and a modern sleek Glassmorphism UI.
+A machine learning application that identifies crop diseases from images and provides multilingual recommendations.
 
+## Features
 
-python -m http.server 3000
-python -m uvicorn backend.app:app --reload
-## 📁 Project Structure
+- **Disease Detection**: AI-powered crop disease identification from images
+- **Multilingual Support**: Translations in 6 languages (English, Hindi, Gujarati, Marathi, Tamil, Telugu)
+- **Voice Features**: Speech-to-text input and text-to-speech output
+- **Confidence Scoring**: Prediction confidence levels
+- **Analysis History**: Track recent predictions
+
+## Supported Languages
+
+- English
+- Hindi (हिन्दी)
+- Gujarati (ગુજરાતી)
+- Marathi (मराठी)
+- Tamil (தமிழ்)
+- Telugu (తెలుగు)
+
+## Project Structure
 
 ```
 CropDiseaseVision/
-│
-├── dataset/         # [Action Required] Place your custom image dataset here (e.g., PlantVillage).
-│
-├── model/           # ML Models and Training
-│   ├── train.py     # Script to train MobileNetV2 on your dataset.
-│   └── create_dummy_model.py # Script to create a dummy untrained model for UI testing.
-│
-├── backend/         # API Layer
-│   └── main.py      # FastAPI application that runs the model prediction.
-│
-├── frontend/        # User Interface
-│   ├── index.html   # Main web application.
-│   ├── style.css    # Premium Glassmorphism aesthetic styles.
-│   └── script.js    # Drag-and-drop & API communication logic.
-│
-├── utils/           # Helper Functions
-│   ├── inference.py     # Preprocessing and prediction wrappers.
-│   └── disease_info.py  # Rule-based treatments and disease data.
-│
-└── requirements.txt # Python dependencies.
+├── frontend/                 # Web UI (HTML/CSS/JavaScript)
+│   ├── index.html
+│   ├── script.js
+│   ├── style.css
+│   └── multilingual-style.css
+├── backend/                  # Flask API
+│   ├── app.py
+│   ├── routes/
+│   ├── services/
+│   └── utils/
+├── model/                    # ML model files
+│   ├── trained_model.h5
+│   └── labels.json
+├── dataset/                  # Training data
+├── saved_models/             # Backup models
+├── tests/                    # Test files
+├── utils/                    # Utility functions
+└── notebooks/                # Jupyter notebooks
 ```
+
+## Setup
+
+### Prerequisites
+- Python 3.8+
+- Node.js (for frontend, optional)
+- 4GB RAM minimum
+- CUDA compatible GPU (optional, for faster inference)
+
+### Installation
+
+1. **Clone and setup**
+   ```bash
+   cd CropDiseaseVision
+   python -m venv .venv
+   .venv\Scripts\activate  # Windows
+   source .venv/bin/activate  # Linux/Mac
+   ```
+
+2. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   cd backend && pip install -r requirements.txt && cd ..
+   ```
+
+3. **Start the application**
+   ```bash
+   # Windows
+   start_system.bat
+   
+   # Linux/Mac
+   bash start.bat
+   ```
+
+4. **Access the application**
+   - Open browser and navigate to `http://localhost:5000`
+
+## Usage
+
+### Web Interface
+1. Select language from dropdown (top-right)
+2. Upload crop disease image
+3. Click "Predict" or use voice recording
+4. View disease name, confidence, and recommendations in selected language
+5. Click "Speak" to hear recommendations
+
+### API Endpoints
+
+**Predict Disease**
+- URL: `POST /api/predict`
+- Input: Image file
+- Output: Disease name, confidence, recommendations
+
+**Multilingual Translation**
+- Automatic translation of results to selected language
+- Translation powered by LibreTranslate API
+
+## Configuration
+
+### Language Mapping
+Edit `frontend/script.js` to add/modify languages:
+
+```javascript
+const LANGUAGE_MAP = {
+    'English': 'en',
+    'Hindi': 'hi',
+    'Gujarati': 'gu',
+    'Marathi': 'mr',
+    'Tamil': 'ta',
+    'Telugu': 'te'
+};
+```
+
+### Model Configuration
+- Trained model: `model/trained_model.h5`
+- Class labels: `model/labels.json`
+- Update paths in `backend/app.py` if relocated
+
+## Performance
+
+- **Prediction Time**: ~200-500ms
+- **Translation Time**: ~1-2s (cached)
+- **Batch Processing**: Supported
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| Port already in use | Change port in `backend/app.py` |
+| Model not found | Verify `model/trained_model.h5` exists |
+| Translation not working | Check internet connection, LibreTranslate API accessible |
+| Speech not working | Allow microphone permissions, use Chrome/Edge |
+
+## API Documentation
+
+### Health Check
+```
+GET /api/health
+Response: {"status": "ok"}
+```
+
+### Predict
+```
+POST /api/predict
+Content-Type: multipart/form-data
+
+Body: image file
+Response: {
+    "disease": "Tomato___Early_blight",
+    "confidence": 0.95,
+    "recommendations": ["...", "...", "..."]
+}
+```
+
+## Technology Stack
+
+**Frontend**
+- HTML5, CSS3, JavaScript
+- Font Awesome icons
+- Responsive design
+
+**Backend**
+- Flask (Python)
+- TensorFlow/Keras (ML)
+- LibreTranslate (Translations)
+
+**ML Model**
+- CNN-based architecture
+- Trained on PlantVillage dataset
+- 38 crop-disease classes
+
+## Browser Support
+
+- Chrome (recommended)
+- Firefox
+- Safari
+- Edge
+
+## License
+
+This project is provided as-is for educational and research purposes.
+
+## Support
+
+For issues or questions:
+1. Check troubleshooting section
+2. Review browser console (F12) for errors
+3. Ensure all dependencies installed
 
 ---
 
-## 🚀 Getting Started
-
-Follow these steps to run the complete system locally.
-
-### 1. Install Dependencies
-Open a terminal in the `CropDiseaseVision` folder and install the required Python packages:
-
-```bash
-pip install -r requirements.txt
-```
-
-### 2. Generate the Model
-
-**Option A: Quick UI Testing (Dummy Model)**
-If you just want to test the full-stack architecture without waiting to train a model:
-```bash
-python model/create_dummy_model.py
-```
-*(This generates `plant_disease_model.h5` and `class_indices.json` with random weights).*
-
-**Option B: Train a Real Model**
-1. Download a dataset like PlantVillage.
-2. Structure it as `dataset/[Class Name]/image.jpg`.
-3. Run the training script:
-```bash
-python model/train.py
-```
-
-### 3. Start the Backend Server (API)
-Start the FastAPI server from the project root using `uvicorn`:
-```bash
-uvicorn backend.main:app --reload
-```
-The server will start at `http://127.0.0.1:8000`.
-You can view the auto-generated API docs at `http://127.0.0.1:8000/docs`.
-
-### 4. Open the Frontend UI
-You don't need a frontend server! Simply open `frontend/index.html` in your web browser:
-1. Double-click `frontend/index.html`
-2. **OR** run a simple HTTP server (optional):
-```bash
-cd frontend
-python -m http.server 3000
-```
-Then visit `http://localhost:3000`.
-
-### 5. Detect Diseases!
-- Drag and drop a leaf image into the UI upload zone.
-- Click **Analyze Leaf**.
-- View the prediction, confidence, health status, and AI-recommended treatments.
-
----
-
-## 🌐 Deployment (Optional)
-
-To push this live to the internet:
-
-### **Backend (FastAPI)**
-You can deploy your backend to platforms like **Render**, **Railway**, or **Heroku**:
-1. Commit the code to GitHub.
-2. Link the repository to Render/Railway.
-3. Set the start command to: `gunicorn -k uvicorn.workers.UvicornWorker backend.main:app --bind 0.0.0.0:$PORT`
-4. Make sure standard instance size has enough RAM for TensorFlow (usually > 1GB).
-
-### **Frontend (HTML/JS)**
-You can host your `frontend/` folder for free on static hosting sites:
-- **Vercel**
-- **Netlify**
-- **GitHub Pages**
-*(Remember to update the fetch URL in `script.js` to point to your live backend API URL instead of `http://127.0.0.1:8000`)*.
+**Version**: 2.0  
+**Last Updated**: May 2026
