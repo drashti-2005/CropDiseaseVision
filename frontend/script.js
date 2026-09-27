@@ -400,7 +400,9 @@ if (standaloneVoiceBtn && recognition) {
             const response = await fetch('http://127.0.0.1:5000/api/predict-voice-disease', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: englishText })
+                body: JSON.stringify({ 
+                    text: englishText
+                })
             });
             
             if (!response.ok) {
@@ -409,17 +411,25 @@ if (standaloneVoiceBtn && recognition) {
             
             const data = await response.json();
             
+            // Check if detection was successful
             if (data.disease === 'Unknown' || data.confidence === 0) {
                  showError('Could not confidently match symptoms to a known disease. Please try describing again in more detail.');
                  showLoading(false);
                  return;
             }
             
-            displayResults(data, 'voice only');
+            // Prepare data for displayResults (it expects the old format)
+            const displayData = {
+                disease: data.disease,
+                confidence: data.confidence,
+                recommendations: data.treatment || []
+            };
+            
+            displayResults(displayData, 'voice only');
             
         } catch (error) {
             console.error('Error:', error);
-            showError(`Failed to connect to backend. Make sure the server is running.`);
+            showError(`Failed to connect to backend. Make sure the server is running on http://127.0.0.1:5000`);
         } finally {
             showLoading(false);
         }

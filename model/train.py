@@ -5,13 +5,14 @@ from tensorflow.keras.applications import MobileNetV2
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Dropout
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
 import matplotlib.pyplot as plt
 import pandas as pd
 
 # Configuration
 IMG_SIZE = (224, 224)
 BATCH_SIZE = 32
-EPOCHS = 5
+EPOCHS = 10
 MODEL_SAVE_PATH = "model/trained_model.h5"
 
 # --- Dataset Configuration ---
@@ -135,19 +136,66 @@ def train_model():
     print("Building model...")
     model = build_model(num_classes)
     
+    # Setup callbacks for better training
+    callbacks = [
+        EarlyStopping(
+            monitor='val_loss',
+            patience=3,
+            restore_best_weights=True,
+            verbose=1
+        ),
+        ReduceLROnPlateau(
+            monitor='val_loss',
+            factor=0.5,
+            patience=2,
+            min_lr=1e-7,
+            verbose=1
+        )
+    ]
+    
     print("Starting training loop...")
     history = model.fit(
         train_generator,
         epochs=EPOCHS,
-        validation_data=validation_generator
+        validation_data=validation_generator,
+        callbacks=callbacks
     )
 
     # Save the model
     model.save(MODEL_SAVE_PATH)
     print(f"Model saved to {MODEL_SAVE_PATH}")
 
+    # Print final accuracy metrics
+    print_accuracy_metrics(history)
+    
     # Plot accuracy and loss
     plot_training(history)
+
+def print_accuracy_metrics(history):
+    """
+    Print detailed accuracy and loss metrics from training history.
+    """
+    acc = history.history['accuracy']
+    val_acc = history.history['val_accuracy']
+    loss = history.history['loss']
+    val_loss = history.history['val_loss']
+    
+    print("\n" + "="*70)
+    print("TRAINING SUMMARY")
+    print("="*70)
+    print(f"\n{'Epoch':<8} {'Train Acc':<15} {'Val Acc':<15} {'Train Loss':<15} {'Val Loss':<15}")
+    print("-"*70)
+    
+    for epoch in range(len(acc)):
+        print(f"{epoch+1:<8} {acc[epoch]:.4f}{'':<10} {val_acc[epoch]:.4f}{'':<10} {loss[epoch]:.4f}{'':<10} {val_loss[epoch]:.4f}")
+    
+    print("-"*70)
+    print(f"\n✓ Final Training Accuracy:   {acc[-1]:.4f} ({acc[-1]*100:.2f}%)")
+    print(f"✓ Final Validation Accuracy: {val_acc[-1]:.4f} ({val_acc[-1]*100:.2f}%)")
+    print(f"✓ Final Training Loss:       {loss[-1]:.4f}")
+    print(f"✓ Final Validation Loss:     {val_loss[-1]:.4f}")
+    print(f"\n✓ Best Validation Accuracy:  {max(val_acc):.4f} ({max(val_acc)*100:.2f}%) at Epoch {val_acc.index(max(val_acc))+1}")
+    print("="*70 + "\n")
 
 def plot_training(history):
     acc = history.history['accuracy']

@@ -2,13 +2,21 @@ import os
 import json
 import numpy as np
 import requests
+import warnings
+import logging
+
+# Suppress TensorFlow warnings
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # Suppress TF info/warning messages
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'  # Disable oneDNN warnings
+
+warnings.filterwarnings('ignore')
+logging.getLogger('tensorflow').setLevel(logging.CRITICAL)
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array
 from PIL import Image
-import warnings
-warnings.filterwarnings('ignore')
 
 from services.voice_detection import predict_disease_from_text
 
@@ -29,7 +37,7 @@ index_to_class = {}
 try:
     print(f"Loading model from {MODEL_PATH}...")
     # Requires an already trained tensorflow keras model structure
-    model = load_model(MODEL_PATH)
+    model = load_model(MODEL_PATH, compile=False)
     print("[OK] Model loaded successfully.")
 except Exception as e:
     print(f"[ERROR] Error loading model: {e}")

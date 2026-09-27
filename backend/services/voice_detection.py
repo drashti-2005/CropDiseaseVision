@@ -60,11 +60,30 @@ def predict_disease_from_text(text):
     best_match_idx = np.argmax(similarities)
     best_score = similarities[0][best_match_idx]
     
+    # Get second-best score for comparison (to check if it's a confident match)
+    similarities_flat = similarities[0].flatten()
+    sorted_scores = np.sort(similarities_flat)
+    second_best_score = sorted_scores[-2] if len(sorted_scores) > 1 else 0
+    
     # Extract the corresponding disease name
     disease_name = disease_names[best_match_idx]
     
-    # If the score is very low, it might mean the text didn't match anything well
-    if best_score < 0.05:
+    # Enhanced confidence validation
+    MINIMUM_THRESHOLD = 0.35  # Require at least 35% similarity (increased from 0.05)
+    RELATIVE_THRESHOLD = 0.15  # Best score must be at least 15% higher than second-best
+    
+    print(f"[VOICE] Input: '{text}' | Best: {best_score:.3f} | Second: {second_best_score:.3f} | Disease: {disease_name}")
+    
+    # If the score is below minimum threshold, reject it
+    if best_score < MINIMUM_THRESHOLD:
+        print(f"[VOICE] ✗ REJECTED - Below minimum threshold ({best_score:.3f} < {MINIMUM_THRESHOLD})")
         return "Unknown", 0.0
-        
+    
+    # Check if there's a significant gap between best and second-best (to avoid ambiguous matches)
+    score_difference = best_score - second_best_score
+    if score_difference < RELATIVE_THRESHOLD:
+        print(f"[VOICE] ✗ REJECTED - Too similar to alternatives ({score_difference:.3f} < {RELATIVE_THRESHOLD})")
+        return "Unknown", 0.0
+    
+    print(f"[VOICE] ✓ ACCEPTED - Confident match ({best_score:.3f})")
     return disease_name, float(best_score)
