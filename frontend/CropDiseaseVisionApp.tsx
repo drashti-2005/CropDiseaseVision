@@ -1,10 +1,10 @@
 /**
  * Enhanced Frontend for Crop Disease Vision with Multilingual Support
  * React + TypeScript + Tailwind CSS
- * Supports: Speech Recognition, Translation, Text-to-Speech, Chat Assistant
+ * Supports: Translation, Text-to-Speech, Chat Assistant
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 
 // ============ Types & Interfaces ============
 
@@ -33,8 +33,6 @@ interface ChatMessage {
 const CropDiseaseVisionApp: React.FC = () => {
   // State Management
   const [selectedLanguage, setSelectedLanguage] = useState<string>('English');
-  const [isRecording, setIsRecording] = useState<boolean>(false);
-  const [transcript, setTranscript] = useState<string>('');
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [prediction, setPrediction] = useState<PredictionResult | null>(null);
@@ -44,69 +42,14 @@ const CropDiseaseVisionApp: React.FC = () => {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState<string>('');
   const [showChat, setShowChat] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<'image' | 'voice' | 'chat'>('image');
+  const [activeTab, setActiveTab] = useState<'image' | 'chat'>('image');
 
   // Refs
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // API Base URL
   const API_BASE = 'http://localhost:5000';
   const MULTILINGUAL_API = `${API_BASE}/api/multilingual`;
-
-  // ============ Speech Recognition Setup ============
-
-  useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = false;
-
-      recognitionRef.current.onstart = () => {
-        setIsRecording(true);
-        setError('');
-      };
-
-      recognitionRef.current.onresult = async (event: SpeechRecognitionEvent) => {
-        const text = Array.from(event.results)
-          .map((result: SpeechRecognitionResult) => result[0].transcript)
-          .join('');
-        
-        setTranscript(text);
-        
-        // Process transcription
-        try {
-          const response = await fetch(`${MULTILINGUAL_API}/speech-to-text`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              transcribed_text: text,
-              language_code: getLanguageCode(selectedLanguage),
-              confidence: 0.95
-            })
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            console.log('Transcription processed:', data);
-          }
-        } catch (err) {
-          console.error('Error processing transcription:', err);
-        }
-      };
-
-      recognitionRef.current.onerror = (event: SpeechRecognitionEvent) => {
-        setError(`Speech recognition error: ${event.error}`);
-        setIsRecording(false);
-      };
-
-      recognitionRef.current.onend = () => {
-        setIsRecording(false);
-      };
-    }
-  }, [selectedLanguage]);
 
   // ============ Helper Functions ============
 
@@ -122,23 +65,14 @@ const CropDiseaseVisionApp: React.FC = () => {
     return codes[language] || 'en-US';
   };
 
-  const startRecording = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.lang = getLanguageCode(selectedLanguage);
-      recognitionRef.current.start();
-    }
-  };
-
-  const stopRecording = () => {
-    if (recognitionRef.current) {
-        recognitionRef.current.stop();
-    }
-  };
-
   // ============ Image Upload Handler ============
 
   const handleImageUpload = (file: File) => {
-    if (!file.type.startsWith('image/')) {
+    const fileName = (file.name || '').toLowerCase();
+    const validExtensions = /\.(jpe?g|png|gif|bmp|webp|heic|heif|tif|tiff)$/i;
+    const isImage = file.type.startsWith('image/') || validExtensions.test(fileName);
+
+    if (!isImage) {
       setError('Please upload a valid image file');
       return;
     }
@@ -344,12 +278,6 @@ const CropDiseaseVisionApp: React.FC = () => {
             label="Image Upload"
           />
           <TabButton
-            active={activeTab === 'voice'}
-            onClick={() => setActiveTab('voice')}
-            icon="🎤"
-            label="Voice Input"
-          />
-          <TabButton
             active={activeTab === 'chat'}
             onClick={() => setActiveTab('chat')}
             icon="💬"
@@ -367,9 +295,6 @@ const CropDiseaseVisionApp: React.FC = () => {
 
         {/* Image Upload Tab */}
         {activeTab === 'image' && <ImageUploadSection {...{ handleImageUpload, previewUrl, loading, handlePredict, translatedResult, speakText, selectedLanguage }} />}
-
-        {/* Voice Input Tab */}
-        {activeTab === 'voice' && <VoiceInputSection {...{ transcript, isRecording, startRecording, stopRecording, loading, selectedLanguage }} />}
 
         {/* Chat Tab */}
         {activeTab === 'chat' && <ChatSection {...{ chatMessages, chatInput, setChatInput, handleChat, loading, selectedLanguage }} />}
@@ -451,37 +376,6 @@ const ImageUploadSection: React.FC<any> = ({
     </div>
   );
 };
-
-const VoiceInputSection: React.FC<any> = ({
-  transcript,
-  isRecording,
-  startRecording,
-  stopRecording,
-  loading,
-  selectedLanguage
-}) => (
-  <div className="bg-white rounded-lg shadow-lg p-6 max-w-2xl mx-auto">
-    <h2 className="text-2xl font-bold text-gray-800 mb-4">🎤 Voice Input</h2>
-    
-    <button
-      onClick={isRecording ? stopRecording : startRecording}
-      className={`w-full py-4 px-6 rounded-lg font-bold text-white text-xl transition mb-4 ${
-        isRecording
-          ? 'bg-red-600 hover:bg-red-700 animate-pulse'
-          : 'bg-green-600 hover:bg-green-700'
-      }`}
-    >
-      {isRecording ? '⏹️ Stop Recording' : '🎤 Start Recording'}
-    </button>
-
-    {transcript && (
-      <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-        <p className="font-semibold text-gray-700">Transcribed Text:</p>
-        <p className="text-gray-800 mt-2">{transcript}</p>
-      </div>
-    )}
-  </div>
-);
 
 const ChatSection: React.FC<any> = ({
   chatMessages,

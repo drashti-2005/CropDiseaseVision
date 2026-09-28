@@ -8,9 +8,9 @@ echo CropDiseaseVision - Multilingual System
 echo ============================================
 echo.
 
-set PROJECT_DIR=d:\practical\AI\AI project\CropDiseaseVision
-set BACKEND_DIR=%PROJECT_DIR%\backend
-set FRONTEND_DIR=%PROJECT_DIR%\frontend
+set "PROJECT_DIR=%~dp0"
+set "BACKEND_DIR=%PROJECT_DIR%backend"
+set "FRONTEND_DIR=%PROJECT_DIR%frontend"
 
 REM Check directories
 if not exist "%BACKEND_DIR%" (

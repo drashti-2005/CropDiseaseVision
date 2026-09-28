@@ -12,7 +12,7 @@ import pandas as pd
 # Configuration
 IMG_SIZE = (224, 224)
 BATCH_SIZE = 32
-EPOCHS = 10
+EPOCHS = 5
 MODEL_SAVE_PATH = "model/trained_model.h5"
 
 # --- Dataset Configuration ---
